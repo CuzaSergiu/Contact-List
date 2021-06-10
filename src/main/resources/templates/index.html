@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title th:utext="${title}"/>
+    <link rel="stylesheet" type="text/css" th:ref="@{/css/style.css}"/>
+</head>
+
+<body>
+    <h1 th:utext="${title}"/>
+    <a th:href="@{/contacts}">Contact List</a>
+    <br>
+    <div>Copyright @ Cuza Sergiu</div>
+</body>
+
+</html>
