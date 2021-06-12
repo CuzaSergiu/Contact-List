@@ -1,7 +1,9 @@
 package com.example.contactlist.controller;
 
+import com.example.contactlist.exception.ResourceNotFoundException;
 import com.example.contactlist.model.Contact;
 import com.example.contactlist.service.ContactService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +12,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import javax.jws.WebParam;
 import java.util.List;
 
+@Slf4j
 @Controller
 public class ContactController {
 
@@ -32,6 +34,7 @@ public class ContactController {
 
     @GetMapping(value = {"/", "/index"})
     public String index(Model model) {
+        log.info("index page");
         model.addAttribute("title", title);
         return "index";
     }
@@ -50,31 +53,76 @@ public class ContactController {
         return "contact-list";
 
     }
-//
+
+    //
 //    @GetMapping(value = "/contacts/{contactId}")
 //    public String getContactById(Model model, @PathVariable long contactId) {
 //
 //    }
 //
-//    @GetMapping(value = "/contacts/add")
-//    public String showAddContact(Model model) {
-//
-//    }
-//
-//    @PostMapping(value = "/contacts/add")
-//    public String addContact(Model model, @ModelAttribute("contact") Contact contact) {
-//
-//    }
-//
-//    @GetMapping(value = "/contacts/{contactId}/edit")
-//    public String showEditContact(Model model, @PathVariable long contactId) {
-//
-//    }
-//
-//    @PostMapping(value = "/contacts/{contactId}/edit")
-//    public String updateContact(Model model, @PathVariable long contactId, @ModelAttribute("contact") Contact contact) {
-//
-//    }
+    @GetMapping(value = "/contacts/add")
+    public String showAddContact(Model model) {
+        log.info("showAddContact getMapping called");
+        Contact contact = new Contact();
+        model.addAttribute("add", true);
+        model.addAttribute("contact", contact);
+
+        return "contact-edit";
+    }
+
+    @PostMapping(value = "/contacts/add")
+    public String addContact(Model model, @ModelAttribute("contact") Contact contact) {
+            //todo de ce nu redirectioneaza corect pagina cand adaugi contact sau sa editezi
+        try {
+            Contact newContact = contactService.save(contact);
+            log.info("addContact post method called");
+
+            return "redirect:/contacts/" + String.valueOf(newContact.getId());
+        } catch (Exception exception) {
+            log.info("error in addContact post method");
+            String errorMessage = exception.getMessage();
+            logger.error(errorMessage);
+            model.addAttribute("errorMessage", errorMessage);
+            model.addAttribute("add", true);
+
+            return "contact-edit";
+        }
+    }
+
+    @GetMapping(value = "/contacts/{contactId}/edit")
+    public String showEditContact(Model model, @PathVariable long contactId) {
+        Contact contact = null;
+        try {
+            contact = contactService.findById(contactId);
+        } catch (ResourceNotFoundException ex) {
+            model.addAttribute("errorMessage", "Contact not found");
+        }
+        model.addAttribute("add", false);
+        model.addAttribute("contact", contact);
+        return "contact-edit";
+    }
+
+    @PostMapping(value = "/contacts/{contactId}/edit")
+    public String updateContact(Model model,
+                                @PathVariable long contactId,
+                                @ModelAttribute("contact") Contact contact) {
+        try {
+            contact.setId(contactId);
+            contactService.update(contact);
+            log.info("updateContact post method called, contact updated");
+            return "redirect:/contacts/" + String.valueOf(contact.getId());
+
+        } catch (Exception exception) {
+            String errorMessage = exception.getMessage();
+            logger.error(errorMessage);
+            model.addAttribute("errorMessage", errorMessage);
+            model.addAttribute("add", false);
+
+            return "contact-edit";
+        }
+
+
+    }
 //
 //    @GetMapping(value = "/contacts/{contactId}/delete")
 //    public String showDeleteContactById(Model model, @PathVariable long contactId) {
